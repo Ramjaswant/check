@@ -1,0 +1,32 @@
+---
+- name: test api
+  hosts: localhost
+  vars:
+    tower_url: "https://172.16.14.6/api/v2/"
+    template_name: job_templates/?name=01_cisco_facts
+    keys: "sjg9sPHtL9PhZPr0mupgkSYxpfTLkw"
+  tasks:
+    - name: get template details
+      uri:
+        url: "{{ tower_url}}{{ template_name }}"
+        validate_certs: no
+        method: GET
+        headers:
+          Authorization: "Bearer {{ keys }}"
+          Accept: "application/json"
+      register: templates
+    # - debug: var=templates
+    - set_fact:
+        template_id: "{{ templates.json.results[0].id }}"
+    - debug: var=template_id
+    - name: Launch Job
+      uri:
+        url: "{{ tower_url }}job_templates/{{ template_id }}/launch/"
+        validate_certs: no
+        method: POST
+        headers:
+          Authorization: "Bearer {{ keys }}"
+          Accept: 'application/json'
+      register: job_result
+      ignore_errors: True
+      

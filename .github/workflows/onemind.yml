@@ -1,0 +1,39 @@
+name: Trigger AAP Template
+
+# on: [pull_request_target, issues, push]
+on: 
+  push:
+    paths:
+      - 01_Git_Hub_SCM/**
+
+jobs:
+  onemind_test:
+    runs-on: eda-poc
+#     container:
+#       image: quay.io/ansible/ansible-runner:stable-2.12-latest
+#       env:
+#         ANSIBLE_HOST_KEY_CHECKING: False
+#     permissions:
+#       issues: write
+#       pull-requests: write
+#     steps:
+#     - uses: actions/first-interaction@v1
+#       with:
+#         repo-token: ${{ secrets.GITHUB_TOKEN }}
+#         issue-message: "Message that will be displayed on users' first issue"
+#         pr-message: "Message that will be displayed on users' first pull request"
+    steps:
+#       - uses: actions/checkout@v3
+#       - name: Install ansible awx collection
+#         run: ansible-galaxy collection install awx.awx:19.0.0 --force
+        
+#       - name: Install Cisco.ios collections
+#         run: ansible-galaxy collection install cisco.ios
+        
+#       - name: Install ansible-lint
+#         run: pip3 install ansible-lint  
+#       - name: trigger template in AAP
+#         run: tower-cli job launch --job-template=10
+      - name: Trigger Template using id
+        run: /home/shibi/trigger_job.py
+        # run: pwd

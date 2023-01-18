@@ -1,0 +1,13 @@
+[all:vars]
+ansible_user=cml
+ansible_ssh_pass=cml
+ansible_network_os=ios
+ansible_connection=network_cli
+ansible_become=yes
+ansible_become_method=enable
+ansible_become_pass=cml
+
+[routers]
+R1 ansible_host=172.16.15.101
+R2 ansible_host=172.16.15.102
+R3 ansible_host=172.16.15.103

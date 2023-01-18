@@ -1,0 +1,44 @@
+name: Push to AWX
+on:
+  - push
+  - workflow_dispatch
+  - delete
+jobs:
+  CI:
+    environment: aap
+    env:
+      TOWER_USERNAME: ${{ secrets.ANSIBLE_USER }}
+      TOWER_PASSWORD: ${{ secrets.ANSIBLE_PASSWORD }}
+      TOWER_VERIFY_SSL: false
+
+    runs-on: ansible-poc
+
+    container:
+      image: quay.io/ansible/ansible-runner:stable-2.12-latest
+      env:
+        ANSIBLE_HOST_KEY_CHECKING: False
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Install ansible-lint in docker awx
+        run: pip3 install ansible-lint
+        
+      - name: Install Cisco collection
+        run: ansible-galaxy collection install cisco.ios
+        
+
+      # - name: Running ansible lint
+      #   run: ansible-lint playbook.yml --exclude vars/ --exclude defaults/
+      
+      - name: Install awx collection
+        run: ansible-galaxy collection install awx.awx:21.0.0 --force
+        
+      - name: Configure Tower
+        # run: ansible-playbook .ci/01_get_template_details.yml
+        run: ansible-playbook -vvv .ci/tower_conf.yml -e git_ref=${{ github.event.ref }}
+      
+      # - name: AAP Launch Template
+      #   run: ansible-playbook -vvv .ci/tower_job_launch.yml
+
+      
+

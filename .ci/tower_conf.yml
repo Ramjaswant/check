@@ -1,0 +1,113 @@
+---
+- hosts: localhost
+  gather_facts: true
+  vars:
+    tower_org: Default
+    exe_env: "cisco_execution_environment"
+    scm_cred: "GitHub_Token"
+    playbook_name: 'playbook.yml'
+    inventory_to_configure: 'cisco_inventory'
+    enable_schedule: 'false'
+    # schedule_rule: "DTSTART:20221123T000000Z RRULE:FREQ=WEEKLY;BYDAY=SU;INTERVAL=1"
+    credlist:
+      - cisco_credentials
+      # - Router
+      # - Eve-ng jump host
+      # - GTT-GAS-TOKEN
+    prod_credlist:
+      # Enter prod job template credentials here
+      - cisco_credentials
+      # - solarwinds_cred
+      # - GTT-GAS-TOKEN
+    prod_verbosity: 0
+
+    ### END VARS TO MODIFY PER REPO
+
+    git_branch: "{{ lookup('ansible.builtin.env', 'GITHUB_REF_NAME') }}"
+    repo_name: "{{ lookup('ansible.builtin.env', 'GITHUB_REPOSITORY') | split('/') | last }}"
+    commit_author: "{{ lookup('ansible.builtin.env', 'GITHUB_ACTOR') }}"
+    commit_sha: "{{ lookup('ansible.builtin.env', 'GITHUB_SHA') }}"
+    repo_url: "https://github.com/{{ lookup('ansible.builtin.env', 'GITHUB_REPOSITORY') }}"
+    git_event: "{{ lookup('ansible.builtin.env', 'GITHUB_EVENT_NAME') }}"
+    server_prod: 172.16.15.15
+    server_to_use: 172.16.15.14
+    prod_inventory: "cisco_inventory"
+    default_inventory: "cisco_inventory"
+    default_cred: "cisco_credentials"
+    default_exe: "cisco_execution_environment"
+    gtt_url_var: https://uatapi.gtt.mcd.com/api/NetworkAutomation/InsertUpdateDeviceDetails
+
+
+  tasks:
+    - name: If branch is main - change vars to prod AAP
+      set_fact:
+        server_to_use: "{{ server_prod }}"
+        inventory_to_configure: "{{ prod_inventory }}"
+        credlist: "{{ prod_credlist }}"
+        verbosity: "{{ prod_verbosity }}"
+        verbosity_to_configure: 0
+        enable_schedule: 'false'
+        gtt_url_var: https://api.gtt.mcd.com/api/NetworkAutomation/InsertUpdateDeviceDetails
+      when: git_branch == 'main' or git_branch == 'master'
+
+    - name: Show values for github vars.
+      debug:
+        msg:
+          - "git_branch: {{ git_branch }}"
+          - "git_event: {{ git_event }}"
+        verbosity: 3
+
+    - name: Block for configuring automation on AAP
+      when: git_event | lower == 'workflow_dispatch' or git_event | lower == 'push'
+      environment:
+        TOWER_HOST: "{{ server_to_use }}"
+      block:
+        - name: Create Project
+          awx.awx.tower_project:
+            name: "{{ repo_name }}_{{ git_branch }}"
+            description: "Commit Author {{ commit_author }} SHA {{ commit_sha }}"
+            organization: "{{ tower_org }}"
+            scm_update_on_launch: true
+            scm_delete_on_update: true
+            credential: "{{ scm_cred }}"
+            scm_type: git
+            scm_url: "{{ repo_url }}"
+            scm_branch: "{{ commit_sha }}"
+            timeout: 3600
+            default_environment: "{{ exe_env | default(default_exe) }}"
+            wait: true
+            state: present
+
+
+        - name: Create Job Template
+          awx.awx.tower_job_template:
+            name: "{{ repo_name }}_{{ git_branch }}"
+            job_type: run
+            organization: "{{ tower_org }}"
+            inventory: "{{ inventory_to_configure | default(default_inventory) }}"
+            project: "{{ repo_name }}_{{ git_branch }}"
+            playbook: "{{ playbook_name | default('playbook.yml') }}"
+            credentials: "{{ credlist | default(default_cred) }}"
+            verbosity: "{{ verbosity | default('3') }}"
+            state: present
+            survey_enabled: false
+
+
+    - name: Block for cleanup of AAP when the feature branch is deleted in github
+      when:
+        - git_event | lower == 'delete'
+        - git_branch | lower != 'main'
+        - git_branch | lower != 'master'
+        - git_branch | lower != 'develop'
+      environment:
+        TOWER_HOST: "{{ server_to_use }}"
+      block:      
+        - name: Delete Job Template {{ repo_name }}_{{ git_branch }}
+          awx.awx.tower_job_template:
+            name: "{{ repo_name }}_{{ git_branch }}_template"
+            state: absent
+
+        - name: Delete Project {{ repo_name }}_{{ git_branch }}
+          awx.awx.tower_project:
+            name: "{{ repo_name }}_{{ git_branch }}_project"
+            state: absent

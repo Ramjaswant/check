@@ -1,0 +1,8 @@
+---
+skip_list:
+  - fqcn-builtins
+  
+warn_list:
+  - command-instead-of-shell
+  - deprecated-local-action
+  - experimental

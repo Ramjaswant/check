@@ -1,0 +1,44 @@
+---
+- name: test api
+  hosts: localhost
+  gather_facts: true
+  vars:
+    tower_url: "https://172.16.15.14/api/v2/"
+    template_name: job_templates/?name=EventDrivenAutomation-POC_main_template
+    keys: "jmqlG9c6Nt4yfQWOTP5tvC4K9BaOhx"
+  tasks:
+    - name: get template details
+      uri:
+        url: "{{ tower_url}}{{ template_name }}"
+        validate_certs: no
+        method: GET
+        headers:
+          Authorization: "Bearer {{ keys }}"
+          Accept: "application/json"
+      register: templates
+    # - debug: var=templates
+    - set_fact:
+        template_id: "{{ templates.json.results[0].id }}"
+    - debug: var=template_id
+    - name: Get folder list
+      ansible.builtin.find:
+        paths: ../
+        file_type: directory
+        recurse: false
+      register: find_list
+    # - set_fact:
+    #     files_list: "{{ dir_list.files }}"
+    - set_fact:
+        lab_list: "{{ find_list.files | sort(attribute='path') | map(attribute='path') | map('basename') }}"
+
+    - name: Launch Job
+      uri:
+        url: "{{ tower_url }}job_templates/{{ template_id }}/launch/"
+        validate_certs: no
+        method: POST
+        headers:
+          Authorization: "Bearer {{ keys }}"
+          Accept: 'application/json'
+      register: job_result
+      ignore_errors: True
+      

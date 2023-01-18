@@ -1,0 +1,8 @@
+# - src: https://github.com/mcdonalds-corp-new/ansible_event_neighbor_down.git
+#   name: neighbor_down
+#   version: gkochar_event_neighbor_down
+#   scm: git
+- src: https://github.com/Onemind-Services-LLC/ansible_event_node_unreachable.git
+  name: node_unreachable
+  scm: git
+  version: feature_11Jan2023

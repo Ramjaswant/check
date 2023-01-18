@@ -1,0 +1,93 @@
+---
+# vars file for roles/event_parser
+event_data:
+  - short_description: "Node unreachable -Node Name:MCDEGY0-R01.mcd.com, IP Address:172.16.14.201"
+    long_description: |
+      Node Name: MCDEGY0-R01.mcd.com
+      IP Address: 10.10.10.10
+      Node Status: Down
+      Region: APMEA
+      Location: Cairo
+      Department: MSC
+      Device Type: Switch
+      Device Functionality: Meraki Switch
+    incident: "INC111111"
+    configuration_item: r1_vty
+    opened_date: ""
+    note: "something in this"
+
+  - short_description: "Node unreachable -Node Name:MCDEGY0-R01.mcd.com, IP Address:172.16.88.150"
+    long_description: |
+      Node Name: MCDEGY0-R01.mcd.com
+      ip Address: 172.16.15.121
+      Node Status: Down
+      Region: APMEA
+      Location: Cairo
+      Department: MSC
+      Device Type: Switch
+      Device Functionality: Meraki Switch
+    incident: "INC111111"
+    # configuration_item: R1
+    configuration_item: r1_vty
+    opened_date: ""
+    note: "device up"
+
+  - short_description: "Neighbor IP status is or deleted - Neighbor IP: 10.10.10.10 on MCDEGY0-R01.mcd.com"
+    long_description: |
+      Node Name: MCDEGY0-R01.mcd.com
+      IP Address: 172.16.88.150
+      Neighbor IP: 10.10.10.9
+      Protocol Name: Cisco EIGRP
+      Protocol Status Description: Down or Deleted
+      Region: APMEA
+      Location: Cairo
+      Department: MSC
+    incident: "INC1234567"
+    # configuration_item: R1
+    configuration_item: r1_vty
+    opened_date: ""
+    # Protocol Status Description: Full or Deleted
+
+  - short_description: "Neighbor IP status is or deleted - Neighbor IP: 66.111.130.17 on MCDEGY0-R01.mcd.com"
+    long_description: |
+      Node Name: MCDEGY0-R01.mcd.com
+      IP Address: 172.16.14.201
+      Neighbor IP: 66.111.130.17
+      Protocol Name: BGP
+      Protocol Status Description: Active or deleted
+      Region: APMEA
+      Location: Cairo
+      Department: Carrier Neutral Facility (CNF) Network
+    incident: "INC1234567"
+    configuration_item: r1_vty
+    opened_date: ""
+
+  - short_description: "new unknown event data type"
+    long_description: |
+      Node Name: MCDEGY0-R01.mcd.com
+      IP Address: 172.16.14.201
+      Neighbor IP: 66.111.130.17
+      Protocol Name: BGP
+      Protocol Status Description: Active or deleted
+      Region: APMEA
+      Location: Cairo
+      Department: Carrier Neutral Facility (CNF) Network
+    incident: "INC1234567"
+    configuration_item: r1_vty
+    opened_date: ""
+
+  - short_description: "Node unreachable -Node Name:MCDEGY0-R01.mcd.com, IP Address:172.16.88.150"
+    long_description: |
+      Node Name: MCDEGY0-R01.mcd.com
+      ip Address: 172.16.15.101
+      Node Status: Down
+      Region: APMEA
+      Location: Cairo
+      Department: MSC
+      Device Type: Switch
+      Device Functionality: Meraki Switch
+    incident: "INC111111"
+    # configuration_item: R1
+    configuration_item: r1_vty
+    opened_date: ""
+    note: "device up"

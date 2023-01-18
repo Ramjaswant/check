@@ -1,0 +1,16 @@
+- name: NET EVENT HANDLER
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  tasks:
+    - name: Trigger event parser playbook
+      ansible.builtin.include_role:
+        name: event_parser
+
+- name: NET EVENT HANDLER CALLING ROLE test
+  hosts: target_ci
+  gather_facts: false
+  tasks:
+    - name: Invoking role
+      ansible.builtin.include_role:
+        name: "{{ role_values }}"

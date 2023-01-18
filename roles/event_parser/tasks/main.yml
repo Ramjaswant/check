@@ -1,0 +1,72 @@
+---
+# tasks file for roles/event_parser
+- name: Setting event data
+  ansible.builtin.set_fact:
+    event_data: "{{ event_data[x | int] }}"
+
+- name: Debug
+  ansible.builtin.debug:
+    msg: "{{ event_data }}"
+
+- name: Block
+  block:
+    - name: Serializing short description
+      # https://regex101.com/r/qbgh5C/1
+      ansible.builtin.set_fact:
+        # parsed_short_desc: "{{ dict(['event_msg','node_name','ip_addr'] | zip(event_data.short_description |
+        # regex_search('(.+?) ?- ?Node.+?Name ?: ?(\\S+), ?IP.+?(\\d+.\\d+.\\d+.\\d+)', '\\1', '\\2', '\\3', IGNORECASE=True))) }}"
+        short_desc_event_msg: "{{ (event_data.short_description | regex_search('^(.+?)-', '\\1', IGNORECASE=True) | first()).strip() }}"
+        # https://regex101.com/r/KqcI9N/1
+        short_desc_node_name: "{{ (event_data.short_description | regex_search('(?:on|Name ?:) ?(\\S+.mcd.com)', '\\1', IGNORECASE=True) | first()).strip() }}"
+        # https://regex101.com/r/WfZXnt/1
+        short_desc_ip_addr: "{{ (event_data.short_description | regex_search('(\\d+.\\d+.\\d+.\\d+)', '\\1', IGNORECASE=True) | first()).strip() }}"
+
+  rescue:
+    - name: No short description parser match found
+      ansible.builtin.set_fact:
+        short_desc_event_msg: "{{ (event_data.short_description | regex_search('(.+)', '\\1', IGNORECASE=True) | first()).strip() }}"
+        short_desc_node_name: ""
+        short_desc_ip_addr: ""
+
+- name: Serializing short description
+  ansible.builtin.set_fact:
+    parsed_short_desc: "{{ dict(['event_msg', 'node_name', 'ip_addr'] | zip([short_desc_event_msg, short_desc_node_name, short_desc_ip_addr])) }}"
+
+- name: Serializing long description
+  ansible.builtin.set_fact:
+    parsed_long_desc: "{{ parsed_long_desc | default({}) | combine({item.split(':', 1)[0].strip().lower() | replace(' ', '_'): item.split(':', 1)[1].strip()}) }}"
+  with_items:
+    - "{{ event_data.long_description | split('\n') | select() | list }}"
+
+- name: Print parsed short and long description
+  ansible.builtin.debug:
+    msg:
+      - "{{ parsed_short_desc }}"
+      - "{{ parsed_long_desc }}"
+
+- name: Selecting relevant role based on event data
+  ansible.builtin.set_fact:
+    role_values:
+      - "{{ 'node_unreachable' if 'node unreachable' in event_data.short_description.lower() }}"
+      - "{{ 'neighbor_down' if 'neighbor ip status is or deleted' in event_data.short_description.lower() }}"
+
+# - name: asdads
+#   ansible.builtin.set_fact:
+#     role_values: "{{ role_values | select() | first | default('default_role') }}"
+#     parsed_long_desc: "{{ parsed_long_desc }}"
+#   delegate_facts: true
+#   delegate_to: "{{ event_data.configuration_item }}"
+
+- name: Add a host alias
+  ansible.builtin.add_host:
+    group: routers
+    name: target_ci
+    ansible_host: "{{ parsed_long_desc.ip_address }}"
+    role_values: "{{ role_values | select() | first | default('default_role') }}"
+    parsed_long_desc: "{{ parsed_long_desc }}"
+  changed_when: false
+- name: Print Role name
+  ansible.builtin.debug:
+    msg: 
+      - "{{ role_values }}"
+      - "{{ hostvars['target_ci']}}"
